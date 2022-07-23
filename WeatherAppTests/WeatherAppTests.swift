@@ -5,29 +5,64 @@
 //  Created by Ashutosh Mane on 29.03.2021.
 //
 
+
 import XCTest
 @testable import WeatherApp
 
-class WeatherAppTests: XCTestCase {
+class WeatherbitDataTests: XCTestCase {
+  private static let dateFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.dateFormat = "MM-dd-yyyy"
+    return formatter
+  }()
+  
+  var exampleJSONData: Data!
+  var weather: WeatherbitData!
 
-    override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
-    }
-
-    override func tearDownWithError() throws {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
-    }
-
-    func testExample() throws {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-    }
-
-    func testPerformanceExample() throws {
-        // This is an example of a performance test case.
-        self.measure {
-            // Put the code you want to measure the time of here.
-        }
-    }
+  override func setUp() {
+    let bundle = Bundle(for: type(of: self))
+    let url = bundle.url(forResource: "WeatherbitExample", withExtension: "json")!
+    exampleJSONData = try! Data(contentsOf: url)
+  
+    let decoder = JSONDecoder()
+    weather = try! decoder.decode(WeatherbitData.self, from: exampleJSONData)
+  }
+    
+  func testDecodeTemp() throws {
+    XCTAssertEqual(weather.currentTemp, 24.19)
+  }
+  
+  func testDecodeIcon() throws {
+    XCTAssertEqual(weather.iconName, "c03d")
+  }
+  
+  func testDecodeDescription() throws {
+    XCTAssertEqual(weather.description, "Broken clouds")
+  }
+  
+  func testDecodeDate() throws {
+    XCTAssertEqual(Self.dateFormatter.string(from: weather.date), "08-28-2017")
+  }
 
 }
+
+
+
+
+class LocationGeocoderTests: XCTestCase {
+  var geocoder = LocationGeocoder()
+
+  func testGeocodingRazewareHeadquarters() {
+    let expectation = self.expectation(description: "Geocoding Results")
+
+    geocoder.geocode(addressString: "McGaheysville, VA") { (locations: [Location])  in
+      print(locations)
+      XCTAssertEqual(locations.count, 1)
+      XCTAssertEqual(locations.first!.name, "Mc Gaheysville, VA")
+      expectation.fulfill()
+    }
+
+    waitForExpectations(timeout: 5, handler: nil)
+  }
+}
+
